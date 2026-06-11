@@ -84,9 +84,10 @@ async def proxy(url: str, params: dict | None = None, *, ttl: int = CACHE_TTL_SE
             detail="Resposta inválida do serviço externo.",
         )
     except httpx.HTTPStatusError as exc:
+        body = exc.response.text.strip()
         raise HTTPException(
             status_code=exc.response.status_code,
-            detail=f"Erro retornado pela API externa: {exc.response.text}",
+            detail=f"Erro retornado pela API externa ({exc.response.status_code}): {body or 'sem detalhes'}",
         )
     except httpx.RequestError as exc:
         raise HTTPException(

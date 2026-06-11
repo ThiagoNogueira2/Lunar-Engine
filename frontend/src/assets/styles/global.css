@@ -1,5 +1,11 @@
 @import 'tailwindcss';
 
+@theme {
+  --font-sans: 'Orbitron', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: 'Orbitron', system-ui, sans-serif;
+}
+
 @layer base {
   *,
   *::before,
@@ -20,8 +26,19 @@
   body {
     background: #030508;
     color: #e8eaf0;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Orbitron', system-ui, sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.02em;
     -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: 'Orbitron', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.04em;
   }
 
   a {

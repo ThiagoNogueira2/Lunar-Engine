@@ -7,39 +7,32 @@ const { data: apod, loading, error } = useApi({ immediate: true, url: '/apod' })
 <template>
   <div class="min-h-full px-10 py-8 text-white">
     <header class="mb-8">
-      <nav class="mb-3 text-xs text-white/40">
-        <router-link to="/" class="hover:text-white/70 transition-colors">/ rotas</router-link>
-        <span> › Foto do Dia</span>
-      </nav>
       <h1 class="text-2xl font-bold mb-1">Foto do Dia</h1>
       <p class="text-sm text-white/40">Astronomy Picture of the Day — NASA APOD.</p>
     </header>
 
-    <div v-if="loading" class="flex items-center gap-3 text-sm text-white/40 py-16">
-      <span class="size-4 rounded-full border-2 border-white/10 border-t-blue-400 animate-spin" />
-      Carregando...
-    </div>
+    <NasaLoader v-if="loading" />
 
     <p v-else-if="error" class="text-sm text-red-400 py-16">Falha ao carregar os dados ({{ error }}).</p>
 
     <template v-else-if="apod">
-      <div class="grid grid-cols-2 gap-6">
-        <div class="rounded-xl border border-white/[0.08] overflow-hidden">
+      <div class="grid grid-cols-2 gap-6 max-w-8xl items-stretch ">
+        <div class="relative h-full min-h-0 rounded-xl border border-white/[0.08] overflow-hidden">
           <img
             v-if="apod.media_type === 'image'"
             :src="apod.url"
             :alt="apod.title"
-            class="w-full object-cover"
+            class="absolute inset-0 h-full w-full object-cover"
           />
           <iframe
             v-else-if="apod.media_type === 'video'"
             :src="apod.url"
-            class="w-full aspect-video"
+            class="absolute inset-0 h-full w-full"
             allowfullscreen
           />
         </div>
 
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4 h-full min-h-0">
           <div class="rounded-xl border border-white/[0.08] bg-white/[0.03] p-5">
             <p class="text-[11px] uppercase tracking-widest text-white/40 mb-3">Título</p>
             <p class="text-xl font-bold">{{ apod.title }}</p>
@@ -52,7 +45,7 @@ const { data: apod, loading, error } = useApi({ immediate: true, url: '/apod' })
             <p class="text-[11px] uppercase tracking-widest text-white/40 mb-3">Crédito</p>
             <p class="text-sm text-white/80">{{ apod.copyright }}</p>
           </div>
-          <div class="rounded-xl border border-white/[0.08] bg-white/[0.03] p-5 flex-1">
+          <div class="rounded-xl border border-white/[0.08] bg-white/[0.03] p-5 flex-1 min-h-0 overflow-y-auto">
             <p class="text-[11px] uppercase tracking-widest text-white/40 mb-3">Descrição</p>
             <p class="text-sm text-white/70 leading-relaxed">{{ apod.explanation }}</p>
           </div>

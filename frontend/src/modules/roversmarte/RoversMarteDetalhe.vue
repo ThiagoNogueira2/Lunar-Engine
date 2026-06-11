@@ -1,63 +1,133 @@
 <script setup>
-import { useRoute } from 'vue-router'
-import { useApi } from '../../composables/useApi.js'
+import { ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import { apiFetch, useTabs, tabClass } from "../../composables/useApi.js";
 
-const route = useRoute()
-const { data: photos, loading, error } = useApi({
-  immediate: true,
-  parseErrorDetail: true,
-  url: () => `/mars-rovers/${route.params.rover}/latest-photos`,
-  transform: (data) => data.latest_photos ?? data.photos ?? [],
-})
+const route = useRoute();
+const r = route.params.rover;
+const date = ref("");
+const minDate = ref("");
+const maxDate = ref("");
+const solPhotos = ref([]);
 const roverName = {
-  curiosity: 'Curiosity',
-  perseverance: 'Perseverance',
-  opportunity: 'Opportunity',
-  spirit: 'Spirit',
+  curiosity: "Curiosity",
+  perseverance: "Perseverance",
+  opportunity: "Opportunity",
+  spirit: "Spirit",
+};
+
+const { tab, tabs, data, loading, error, load } = useTabs([
+  {
+    id: "latest",
+    label: "Recentes",
+    path: `/mars-rovers/${r}/latest-photos`,
+    transform: (d) => d.latest_photos ?? d.photos ?? [],
+  },
+  { id: "manifest", label: "Manifesto", path: `/mars-rovers/${r}/manifesto` },
+]);
+
+const manifest = () => data.value?.photo_manifest;
+
+function switchTab(id) {
+  date.value = "";
+  solPhotos.value = [];
+  load(id);
 }
+
+watch(data, (d) => {
+  const m = d?.photo_manifest;
+  if (tab.value !== "manifest" || !m) return;
+  minDate.value = m.landing_date ?? "";
+  maxDate.value = m.max_date ?? "";
+  if (!date.value || date.value < minDate.value || date.value > maxDate.value)
+    date.value = maxDate.value;
+});
+
+watch(date, async (d) => {
+  if (!d) return;
+  solPhotos.value =
+    (await apiFetch(`/mars-rovers/${r}/photos?earth_date=${d}`)).photos ?? [];
+});
 </script>
 
 <template>
   <div class="min-h-full px-10 py-8 text-white">
     <header class="mb-8">
-      <nav class="mb-3 text-xs text-white/40">
-        <router-link to="/" class="hover:text-white/70 transition-colors">/ rotas</router-link>
-        <span> › </span>
-        <router-link to="/rovers-marte" class="hover:text-white/70 transition-colors">Rovers em Marte</router-link>
-        <span> › {{ roverName[route.params.rover] ?? route.params.rover }}</span>
-      </nav>
-      <h1 class="text-2xl font-bold mb-1">{{ roverName[route.params.rover] ?? route.params.rover }}</h1>
-      <p class="text-sm text-white/40">Fotos mais recentes do rover. Dados via Nebulum Mars Rover API.</p>
+      <h1 class="text-2xl font-bold mb-1">{{ roverName[r] ?? r }}</h1>
+      <p class="text-sm text-white/40">Fotos do rover em Marte.</p>
     </header>
 
-    <div v-if="loading" class="flex items-center gap-3 text-sm text-white/40 py-16">
-      <span class="size-4 rounded-full border-2 border-white/10 border-t-blue-400 animate-spin" />
-      Carregando...
+    <div class="flex gap-2 mb-6 flex-wrap">
+      <button
+        v-for="t in tabs"
+        :key="t.id"
+        :class="tabClass(tab === t.id)"
+        @click="switchTab(t.id)"
+      >
+        {{ t.label }}
+      </button>
     </div>
 
-    <p v-else-if="error" class="text-sm text-red-400 py-16">Falha ao carregar os dados ({{ error }}).</p>
-
-    <p v-else-if="photos?.length === 0" class="text-sm text-white/40 py-16">
-      Nenhuma foto encontrada para este Sol neste rover.
+    <NasaLoader v-if="loading" />
+    <p v-else-if="error" class="text-sm text-red-400 py-16">
+      Falha ao carregar ({{ error }}).
     </p>
 
-    <div v-else class="grid grid-cols-4 gap-4">
+    <div v-else-if="tab === 'latest'" class="grid grid-cols-4 gap-4">
+      <p v-if="!data?.length" class="col-span-4 text-sm text-white/40 py-8">
+        Nenhuma foto recente.
+      </p>
       <div
-        v-for="photo in photos?.slice(0, 30)"
+        v-for="photo in data?.slice(0, 24)"
         :key="photo.id"
-        class="rounded-xl border border-white/[0.08] bg-white/[0.03] overflow-hidden"
+        class="rounded-xl border border-white/[0.08] overflow-hidden"
       >
         <img
           :src="photo.img_src"
-          :alt="`${photo.rover?.name} - ${photo.camera?.full_name}`"
+          :alt="photo.camera?.full_name"
           class="w-full aspect-square object-cover"
           loading="lazy"
         />
-        <div class="p-3">
-          <p class="text-xs font-medium text-white/80 truncate">{{ photo.camera?.full_name }}</p>
-          <p class="text-[11px] text-white/40 mt-0.5">Sol {{ photo.sol }} · {{ photo.earth_date }}</p>
-        </div>
+        <p class="p-3 text-xs truncate">
+          {{ photo.camera?.full_name }} · Sol {{ photo.sol }}
+        </p>
       </div>
     </div>
+
+    <template v-else-if="manifest()">
+      <input
+        v-model="date"
+        type="date"
+        :min="minDate"
+        :max="maxDate"
+        class="mb-2 bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-2.5 text-sm outline-none focus:border-white/20 [color-scheme:dark]"
+      />
+      <p v-if="minDate && maxDate" class="text-xs text-white/35 mb-6">
+        Datas disponíveis: {{ minDate }} até {{ maxDate }}
+      </p>
+      <div class="grid grid-cols-4 gap-4">
+        <p
+          v-if="!solPhotos.length"
+          class="col-span-4 text-sm text-white/40 py-8"
+        >
+          Nenhuma foto nesta data.
+        </p>
+        <div
+          v-for="photo in solPhotos.slice(0, 24)"
+          :key="photo.id"
+          class="rounded-xl border border-white/[0.08] overflow-hidden"
+        >
+          <img
+            :src="photo.img_src"
+            :alt="photo.camera?.full_name"
+            class="w-full aspect-square object-cover"
+            loading="lazy"
+          />
+          <p class="p-3 text-xs truncate">
+            {{ photo.camera?.full_name }} · Sol {{ photo.sol }}
+          </p>
+        </div>
+      </div>
+    </template>
   </div>
 </template>

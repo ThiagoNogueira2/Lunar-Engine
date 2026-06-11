@@ -3,6 +3,16 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiFetch } from '../../composables/useApi.js'
 
+function techportSummary(data, projectId) {
+  const p = data?.project ?? data
+  return {
+    projectId: p.projectId ?? projectId,
+    title: p.title,
+    acronym: p.acronym || null,
+    startDate: p.startDate ?? p.startDateString,
+  }
+}
+
 const router = useRouter()
 const projects = ref([])
 const totalCount = ref(0)
@@ -26,16 +36,9 @@ const filtered = computed(() => {
 async function fetchProjectDetail(item) {
   try {
     const data = await apiFetch(`/techport/projects/${item.projectId}`)
-    const p = data.project ?? data
-    return {
-      projectId: p.projectId ?? item.projectId,
-      title: p.title,
-      acronym: p.acronym || null,
-      startDate: p.startDate,
-      lastUpdated: item.lastUpdated,
-    }
+    return techportSummary(data, item.projectId)
   } catch {
-    return { projectId: item.projectId, lastUpdated: item.lastUpdated }
+    return { projectId: item.projectId }
   }
 }
 
@@ -49,7 +52,7 @@ async function load() {
     const data = await apiFetch('/techport/projects')
     const list = (data.projects ?? []).slice(0, BATCH_SIZE)
     totalCount.value = data.totalCount ?? data.projects?.length ?? 0
-    status.value = `Carregando detalhes de ${list.length} projetos recentes...`
+    status.value = `Carregando detalhes de ${list.length} projetos...`
     projects.value = await Promise.all(list.map(fetchProjectDetail))
   } catch (e) {
     error.value = e.message
@@ -65,20 +68,11 @@ onMounted(load)
 <template>
   <div class="min-h-full px-10 py-8 text-white">
     <header class="mb-8">
-      <nav class="mb-3 text-xs text-white/40">
-        <router-link to="/" class="hover:text-white/70 transition-colors">/ rotas</router-link>
-        <span> › Projetos</span>
-      </nav>
       <h1 class="text-2xl font-bold mb-1">Projetos NASA</h1>
       <p class="text-sm text-white/40">Portfólio de tecnologias e projetos via NASA Techport.</p>
     </header>
 
- 
-
-    <div v-if="loading" class="flex flex-col items-center gap-3 text-sm text-white/40 py-16">
-      <span class="size-4 rounded-full border-2 border-white/10 border-t-blue-400 animate-spin" />
-      <p>{{ status }}</p>
-    </div>
+    <NasaLoader v-if="loading" :message="status || 'Carregando...'" />
 
     <p v-else-if="error" class="text-sm text-red-400 py-16">Falha ao carregar os dados ({{ error }}).</p>
 

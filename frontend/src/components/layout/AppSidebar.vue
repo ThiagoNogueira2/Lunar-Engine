@@ -155,27 +155,32 @@ function isActive(path) {
 }
 
 .sidebar-nav {
-  flex: 1;
-  padding: 8px 0;
-  
+  flex: 0.8;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 0 20px;
+  min-height: 0;
 }
 
 .sidebar-nav ul {
   list-style: none;
   margin: 0;
   padding: 0;
- 
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 16px;
+  padding: 10px 16px;
   color: rgba(255, 255, 255, 0.55);
   text-decoration: none;
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 12px;
+  font-weight: 500;
   transition: color 0.15s, background-color 0.15s;
   border-radius: 0;
   cursor: pointer;
@@ -204,6 +209,10 @@ function isActive(path) {
 }
 
 .nav-label {
-  line-height: 1.3;
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
 }
 </style>

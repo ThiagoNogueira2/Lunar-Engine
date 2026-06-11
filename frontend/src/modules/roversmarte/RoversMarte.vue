@@ -29,10 +29,6 @@ const rovers = [
 <template>
   <div class="min-h-full px-10 py-8 text-white">
     <header class="mb-8">
-      <nav class="mb-3 text-xs text-white/40">
-        <router-link to="/" class="hover:text-white/70 transition-colors">/ rotas</router-link>
-        <span> › Rovers em Marte</span>
-      </nav>
       <h1 class="text-2xl font-bold mb-1">Rovers em Marte</h1>
       <p class="text-sm text-white/40">Fotos recentes de Curiosity e Perseverance via Nebulum Mars Rover API.</p>
     </header>

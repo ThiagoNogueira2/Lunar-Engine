@@ -23,8 +23,3 @@ async def neo_browse(page: int = 0):
 @router.get("/lookup/{asteroid_id}")
 async def neo_lookup(asteroid_id: int):
     return await proxy(f"{NASA}/neo/rest/v1/neo/{asteroid_id}", {"api_key": API_KEY})
-
-
-@router.get("/stats")
-async def neo_stats():
-    return await proxy(f"{NASA}/neo/rest/v1/neo/stats", {"api_key": API_KEY})

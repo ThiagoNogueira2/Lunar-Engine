@@ -10,20 +10,14 @@ function resolveUrl(url) {
   return typeof url === 'function' ? url() : url
 }
 
-async function parseResponse(res, { parseErrorDetail = false } = {}) {
-  if (!res.ok) {
-    if (parseErrorDetail) {
-      const body = await res.json().catch(() => null)
-      throw new Error(body?.detail ?? String(res.status))
-    }
-    throw new Error(String(res.status))
-  }
+async function parseResponse(res) {
+  if (!res.ok) throw new Error(String(res.status))
   return res.json()
 }
 
-export async function apiFetch(path, options = {}) {
+export async function apiFetch(path) {
   const res = await fetch(buildUrl(path))
-  return parseResponse(res, options)
+  return parseResponse(res)
 }
 
 export function useApi(options = {}) {
@@ -32,7 +26,6 @@ export function useApi(options = {}) {
     immediate = false,
     url,
     transform = (data) => data,
-    parseErrorDetail = false,
   } = options
 
   const data = ref(initialData)
@@ -49,9 +42,7 @@ export function useApi(options = {}) {
     if (reset) data.value = initialData
 
     try {
-      const json = await apiFetch(path, {
-        parseErrorDetail: runOptions.parseErrorDetail ?? parseErrorDetail,
-      })
+      const json = await apiFetch(path)
       data.value = transformFn(json)
       return data.value
     } catch (e) {
@@ -73,4 +64,38 @@ export function useApi(options = {}) {
   }
 
   return { data, loading, error, searched, run, search }
+}
+
+export function useTabs(tabs) {
+  const tab = ref(tabs[0]?.id)
+  const { data, loading, error, run } = useApi()
+
+  function load(id = tab.value) {
+    tab.value = id
+    const current = tabs.find((t) => t.id === id)
+    if (current) run(current.path, { transform: current.transform })
+  }
+
+  onMounted(() => load())
+
+  return { tab, tabs, data, loading, error, load }
+}
+
+const TAB_BTN = 'text-xs px-3 py-1.5 rounded-lg border transition-colors'
+
+export function tabClass(active) {
+  return active
+    ? `${TAB_BTN} border-blue-500/50 bg-blue-500/10 text-blue-300`
+    : `${TAB_BTN} border-white/10 text-white/50 hover:text-white/80 hover:border-white/20`
+}
+
+export function useFetchDetail() {
+  const detail = ref(null)
+  async function load(path) {
+    if (path) detail.value = await apiFetch(path)
+  }
+  function clear() {
+    detail.value = null
+  }
+  return { detail, load, clear }
 }
