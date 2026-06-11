@@ -52,6 +52,7 @@ watch(date, async (d) => {
 
 <template>
   <div class="min-h-full px-10 py-8 text-white">
+    <BackButton />
     <header class="mb-8">
       <h1 class="text-2xl font-bold mb-1">{{ roverName[r] ?? r }}</h1>
       <p class="text-sm text-white/40">Fotos do rover em Marte.</p>

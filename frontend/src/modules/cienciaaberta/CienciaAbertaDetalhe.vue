@@ -37,6 +37,7 @@ const blocks = computed(() => {
 
 <template>
   <div class="min-h-full px-10 py-8 text-white">
+    <BackButton />
     <NasaLoader v-if="loading" />
     <p v-else-if="error" class="text-sm text-red-400 py-16">Falha ao carregar os dados ({{ error }}).</p>
 

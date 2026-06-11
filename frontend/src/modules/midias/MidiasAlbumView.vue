@@ -49,6 +49,7 @@ const openMedia = (item) => {
 
 <template>
   <div class="min-h-full px-10 py-8 text-white">
+    <BackButton />
     <header class="mb-8">
       <h1 class="text-2xl font-bold mb-1">Mídias</h1>
       <p class="text-sm text-white/40">
