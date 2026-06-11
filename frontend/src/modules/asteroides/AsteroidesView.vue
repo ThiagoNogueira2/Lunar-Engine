@@ -68,14 +68,14 @@ const { tab, tabs, data, loading, error, load } = useTabs([
               {{ a.absolute_magnitude_h }}
             </td>
             <td
-              class="px-5 py-3.5 text-xs"
+              class="px-5 py-3.5 text-xs font-medium"
               :class="
                 a.is_potentially_hazardous_asteroid
                   ? 'text-red-400'
-                  : 'text-white/25'
+                  : 'text-green-400'
               "
             >
-              {{ a.is_potentially_hazardous_asteroid ? "Perigoso" : "—" }}
+              {{ a.is_potentially_hazardous_asteroid ? "Perigoso" : "Seguro" }}
             </td>
           </tr>
         </tbody>
