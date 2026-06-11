@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from core.config import API_KEY, NASA
 from core.proxy import proxy
@@ -8,8 +8,20 @@ from core.proxy import proxy
 router = APIRouter(prefix="/neo", tags=["NeoWs – Asteroides"])
 
 
-@router.get("/feed")
-async def neo_feed(start_date: str | None = None, end_date: str | None = None):
+@router.get("/feed", summary="Feed de asteroides por período")
+async def neo_feed(
+    start_date: str | None = Query(
+        None,
+        description="Data inicial no formato YYYY-MM-DD. Padrão: 7 dias atrás.",
+        example="2024-12-20",
+    ),
+    end_date: str | None = Query(
+        None,
+        description="Data final no formato YYYY-MM-DD. Padrão: hoje.",
+        example="2024-12-27",
+    ),
+):
+    """Retorna asteroides próximos da Terra dentro de um intervalo de datas (máximo 7 dias)."""
     end = end_date or date.today().isoformat()
     start = start_date or (date.today() - timedelta(days=7)).isoformat()
     return await proxy(f"{NASA}/neo/rest/v1/feed", {"api_key": API_KEY, "start_date": start, "end_date": end})

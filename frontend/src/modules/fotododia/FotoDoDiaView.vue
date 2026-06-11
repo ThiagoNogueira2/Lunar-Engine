@@ -1,7 +1,22 @@
 <script setup>
+import { ref } from 'vue'
 import { useApi } from '../../composables/useApi.js'
 
-const { data: apod, loading, error } = useApi({ immediate: true, url: '/apod' })
+const selectedDate = ref('')
+const { data: apod, loading, error, run } = useApi({ immediate: true, url: '/apod' })
+
+function searchByDate() {
+  if (!selectedDate.value) {
+    run('/apod')
+  } else {
+    run(`/apod?date=${selectedDate.value}`)
+  }
+}
+
+function clearDate() {
+  selectedDate.value = ''
+  run('/apod')
+}
 </script>
 
 <template>
@@ -11,12 +26,37 @@ const { data: apod, loading, error } = useApi({ immediate: true, url: '/apod' })
       <p class="text-sm text-white/40">Astronomy Picture of the Day — NASA APOD.</p>
     </header>
 
+    <div class="flex items-end gap-3 mb-8">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[11px] uppercase tracking-widest text-white/40">Pesquisar por data</label>
+        <input
+          v-model="selectedDate"
+          type="date"
+          max="9999-12-31"
+          class="bg-white/[0.05] border border-white/[0.12] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+        />
+      </div>
+      <button
+        class="text-xs px-4 py-2.5 rounded-lg border border-blue-500/50 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 transition-colors"
+        @click="searchByDate"
+      >
+        Buscar
+      </button>
+      <button
+        v-if="selectedDate"
+        class="text-xs px-4 py-2.5 rounded-lg border border-white/10 text-white/50 hover:text-white/80 hover:border-white/20 transition-colors"
+        @click="clearDate"
+      >
+        Limpar
+      </button>
+    </div>
+
     <NasaLoader v-if="loading" />
 
     <p v-else-if="error" class="text-sm text-red-400 py-16">Falha ao carregar os dados ({{ error }}).</p>
 
     <template v-else-if="apod">
-      <div class="grid grid-cols-2 gap-6 max-w-8xl items-stretch ">
+      <div class="grid grid-cols-2 gap-6 max-w-8xl items-stretch">
         <div class="relative h-full min-h-0 rounded-xl border border-white/[0.08] overflow-hidden">
           <img
             v-if="apod.media_type === 'image'"

@@ -1,22 +1,47 @@
 <script setup>
+import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { useTabs, tabClass } from "../../composables/useApi.js";
+import { useApi, tabClass } from "../../composables/useApi.js";
 
 const router = useRouter();
-const { tab, tabs, data, loading, error, load } = useTabs([
-  {
-    id: "browse",
-    label: "Catálogo",
-    path: "/neo/browse",
-    transform: (d) => d.near_earth_objects ?? [],
-  },
-  {
-    id: "feed",
-    label: "Feed",
-    path: "/neo/feed",
-    transform: (d) => Object.values(d.near_earth_objects ?? {}).flat(),
-  },
-]);
+
+const tab = ref("browse");
+const startDate = ref("");
+const endDate = ref("");
+
+const tabs = [
+  { id: "browse", label: "Catálogo" },
+  { id: "feed", label: "Feed (por data)" },
+];
+
+const { data, loading, error, run } = useApi();
+
+function loadTab(id) {
+  tab.value = id;
+  if (id === "browse") {
+    run("/neo/browse", { transform: (d) => d.near_earth_objects ?? [] });
+  } else {
+    searchFeed();
+  }
+}
+
+function searchFeed() {
+  let path = "/neo/feed";
+  const params = [];
+  if (startDate.value) params.push(`start_date=${startDate.value}`);
+  if (endDate.value) params.push(`end_date=${endDate.value}`);
+  if (params.length) path += `?${params.join("&")}`;
+  run(path, { transform: (d) => Object.values(d.near_earth_objects ?? {}).flat() });
+}
+
+function clearDates() {
+  startDate.value = "";
+  endDate.value = "";
+  searchFeed();
+}
+
+// load initial tab
+loadTab("browse");
 </script>
 
 <template>
@@ -31,10 +56,45 @@ const { tab, tabs, data, loading, error, load } = useTabs([
         v-for="t in tabs"
         :key="t.id"
         :class="tabClass(tab === t.id)"
-        @click="load(t.id)"
+        @click="loadTab(t.id)"
       >
         {{ t.label }}
       </button>
+    </div>
+
+    <div v-if="tab === 'feed'" class="flex items-end gap-3 mb-6 flex-wrap">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[11px] uppercase tracking-widest text-white/40">Data inicial</label>
+        <input
+          v-model="startDate"
+          type="date"
+          max="9999-12-31"
+          class="bg-white/[0.05] border border-white/[0.12] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+        />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[11px] uppercase tracking-widest text-white/40">Data final</label>
+        <input
+          v-model="endDate"
+          type="date"
+          max="9999-12-31"
+          class="bg-white/[0.05] border border-white/[0.12] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+        />
+      </div>
+      <button
+        class="text-xs px-4 py-2.5 rounded-lg border border-blue-500/50 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 transition-colors"
+        @click="searchFeed"
+      >
+        Buscar
+      </button>
+      <button
+        v-if="startDate || endDate"
+        class="text-xs px-4 py-2.5 rounded-lg border border-white/10 text-white/50 hover:text-white/80 hover:border-white/20 transition-colors"
+        @click="clearDates"
+      >
+        Limpar
+      </button>
+      <p class="text-[10px] text-white/30 ml-2 self-center">Máx. 7 dias de intervalo</p>
     </div>
 
     <NasaLoader v-if="loading" />
